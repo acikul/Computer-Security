@@ -1,0 +1,73 @@
+1) Skeniranje alatom ping
+	-virtualni stroj: 64 bytes from 192.168.8.112: icmp_seq=0 ttl=64 time=0.408 ms
+	-mail.fer.hr: 64 bytes from 161.53.72.233: icmp_seq=0 ttl=113 time=32.641 ms
+	-161.53.19.1: 64 bytes from 161.53.19.1: icmp_seq=0 ttl=238 time=41.555 ms
+	-imunes.net: 64 bytes from 161.53.19.8: icmp_seq=1 ttl=46 time=50.432 ms
+	
+	-TTL vrijednosti su bliske potencijama broja 2 (64, 128, 256), maksimalna vrijednost TTL-a je 255, a preporučena vrijednost je 64 (za smanjenje overheada čekanja isteka); tako svaki operacijski sustav ima specificiran TTL koji koristi, od najpoznatijih OS-a: Linux 64 (virtualni stroj i imunes.net), MacOS 64, Windows 128 (mail.fer.hr), FreeBSD 64, Solaris/AIX 255 (161.53.19.1)
+
+2)Skeniranje alatom nmap
+	-poziv sa zastavicom -sV na virtualnom stroju identičan je pozivu s vlastitog računala i ne mijenja ispis netstat alata na virtualnom stroju (watch -n 0.5 netstat -ant):
+		nmap -sV 192.168.8.112
+		Starting Nmap 7.91 ( https://nmap.org ) at 2021-05-28 01:54 CEST
+		Nmap scan report for 192.168.8.112
+		Host is up (0.0019s latency).
+		Not shown: 999 closed ports
+		PORT   STATE SERVICE VERSION
+		22/tcp open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 (Ubuntu Linux; protocol 2.0)
+		Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+		Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+		Nmap done: 1 IP address (1 host up) scanned in 0.76 seconds
+
+	-poziv sa zastavicom -A daje (i u netstat alatu se pojavljuju novi retci):
+		Nmap scan report for 192.168.8.112
+		Host is up (0.00084s latency).
+		Not shown: 999 closed ports
+		PORT   STATE SERVICE VERSION
+		22/tcp open  ssh     OpenSSH 7.6p1 Ubuntu 4ubuntu0.3 (Ubuntu Linux; protocol 2.0)
+		| ssh-hostkey: 
+		|   2048 09:db:0a:5f:cc:ce:9c:3b:bb:b0:dc:74:5a:b2:d3:05 (RSA)
+		|   256 06:84:04:fc:09:68:0d:8a:e0:b8:38:4a:57:90:d2:c5 (ECDSA)
+		|_  256 ec:6a:a0:7d:d0:59:1d:be:a1:1f:29:16:0c:fd:b6:a7 (ED25519)
+		MAC Address: 08:00:27:EF:ED:8C (Oracle VirtualBox virtual NIC)
+		Device type: general purpose
+		Running: Linux 4.X|5.X
+		OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+		OS details: Linux 4.15 - 5.6
+		Network Distance: 1 hop
+		Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+	
+	-poziv sa zastavicom -O ne rezultira novim retcima u netstat alatu i utvrđen je Linux kao OS:
+		Nmap scan report for 192.168.8.112
+		Host is up (0.00076s latency).
+		Not shown: 999 closed ports
+		PORT   STATE SERVICE
+		22/tcp open  ssh
+		MAC Address: 08:00:27:EF:ED:8C (Oracle VirtualBox virtual NIC)
+		Device type: general purpose
+		Running: Linux 4.X|5.X
+		OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+		OS details: Linux 4.15 - 5.6
+		Network Distance: 1 hop
+
+	-TCP SYN scan (zastavica -sS) ne rezultira novim retcima u netstat alatu i ispis je:
+		Nmap scan report for 192.168.8.112
+		Host is up (0.00095s latency).
+		Not shown: 999 closed ports
+		PORT   STATE SERVICE
+		22/tcp open  ssh
+		MAC Address: 08:00:27:EF:ED:8C (Oracle VirtualBox virtual NIC)
+
+	-skeniranje TCP portova (zastavica -sT) i UDP portova ne rezultira novim retcima u netstat alatu i primjer ispisa je:
+		Nmap scan report for 192.168.8.112
+		Host is up (0.0013s latency).
+		Not shown: 999 filtered ports
+		PORT   STATE SERVICE
+		22/tcp open  ssh
+		MAC Address: 08:00:27:EF:ED:8C (Oracle VirtualBox virtual NIC)
+
+Razlog zašto samo -A mijenja ispis netstat alata na virtualnom stroju je taj što ta opcija zapravo uspostavlja veze,
+dok sve ostale opcije koriste half-open scanning koji ne otvori cijelu vezu nego šalje SYN paket i gleda odgovor:
+SYN/ACK za listening port, RST za non-listener ili označava port kao filtered ako nakon par slanja ne odgovara / ako
+je odgovor ICMP unreachable.

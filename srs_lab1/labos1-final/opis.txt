@@ -1,0 +1,25 @@
+Rješenje je pisano u Javi.
+Za demonstraciju i opis funkcionalnosti pogledati i pokrenuti skripta.sh
+
+Kriptograske funkcije koje se koriste:
+    -HMAC -> HmacSHA512
+    -encrypt/decrypt -> AES-128 (CBC, PKCS5Padding)
+    -key derivation -> PBKDF2WithHmacSHA256
+
+Podaci u vault-u su oblika:
+MAC salt(256 bytes) - hmac(64 bytes) - IV(128 bytes) - enkriptirani podaci - ENC salt(256 bytes)
+Sigurnosni zahtjevi su ispunjeni korištenjem Encrypt-then-MAC pristupom.
+Povjerljivost adresa i zaporki je osigurana AES-128 simetričnom enkripcijom
+(varijanta s padding-om da se u napadu ne zna prava duljina plaintext-a), a integritet
+je osiguran HMAC-om koji se računa za enkriptirane podatke + IV.
+Kod inicijalizacije generiraju se random encription salt i mac salt (duljine 256 bajtova).
+Kod dekripcije ti salt-ovi se čitaju iz vault-a, a prije svake enkripcije generiraju se
+novi salt-ovi i ključevi. U slučaju izmjene tih salt-ova u
+vault-u, neće se generirati funkcionalni ključevi i neće proći provjera integriteta. 
+Iz master password-a i salt-ova se deriviraju ključ za enkripciju i ključ za MAC.
+Kod svakog korištenja, i kao uvjet za dekripciju, provjerava se integritet uspoređivanjem
+spremljenog i izračunatog HMAC-a( HMAC od IV + ekriptiranih podataka).
+Svi podaci u vault-u se nakon svake put akcije enkriptiraju
+(uvijek novi IV generiran kriptografski sigurnim RNG-om),računa se i konkatenira hmac
+od IV + enkriptiranih podataka i još se konkateniraju
+oba salt-a te se sve zajedno sprema u vault.

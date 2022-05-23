@@ -1,0 +1,34 @@
+Rješenje je pisano u Javi.
+Za demonstraciju i opis funkcionalnosti pogledati i pokrenuti skripta_srs_lab2.sh
+
+Hash funkcija -> PBKDF2WithHmacSHA256
+
+Podaci se u programu spremaju u HashMap<String, HashSaltForced> gdje je ključ 
+korisničko ime, a vrijednost klasa koja sadrži članove: byte array-eve 
+hash i salt te boolean forced koji označava je li forsirana promjena
+lozinke za tog korisnika. Ta mapa se serijalizacijom sprema u file userpass.
+
+  - sigurna pohrana lozinki
+	Nisu spremane kao plaintext, nego se svakoj lozinki dodaje salt 
+	duljine 256 byte-ova generiran kriptografski sigurnim RNG i
+	salted lozinka se propušta kroz kriptografsku funkciju sažetka.
+	Pohranjuje se hash (isto duljine 256 byte-ova) i salt te u 
+	slučaju da napadač dođe do datoteke s lozinkama, preostaje mu 
+	samo pogađanje. Salt-anjem se postiže da iste lozinke imaju 
+	različiti hash te se brani od Rainbow table napada.
+  - sprečavanje pogađanja
+	Uz naveden proces pohrane, pogađanje dodatno otežava zahtijevanje
+	minimalne kompleksnosti - minimalna duljina 8 znakova.
+  - periodička promjena
+	Admin može zadati forsiranje promjene lozinke za korisnika pri svakoj 
+	prijavi, uz uvjet da nije ista kao prošla lozinka.
+  - zaboravljene lozinke
+	Admin može promijeniti lozinku za korisnika koji ju je zaboravio.
+  - tijekom unosa paziti da ih nitko ne otkrije
+	Za unos lozinke koristi se Java funkcija console.readPassword()
+
+Za hash-iranje salted lozinke koristi se gore navedena hash funkcija jer je
+računalno zahtjevnija - sporija i sigurnija od SHA-256 (još bolje bi bilo
+koristiti BCrypt, ali nije službeno implementiran u Java bibliotekama pa 
+je zbog jednostavnosti predaje izostavljen).
+

